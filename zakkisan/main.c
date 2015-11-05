@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <math.h>
 
+// issue:rootノードが存在しない
+// issue:子ノードを作るときの処理が間違っている
+
 typedef struct neuron{
     int     num;                // ノード番号
     int     leafnum;            // 自身の子ノードの葉ノードの数
@@ -10,50 +13,55 @@ typedef struct neuron{
     struct  neuron *parent;
 }Neuron;
 
-void    copy(Neuron *n,float e);
+void    copy(Neuron *n,float e, int num);
 int     is_leaf(Neuron *n);
 float   distance(float e,float weight);
 void    test(float kyori,float e,Neuron *winner);
-void    update(Neuron *winner,float e);
+void    update(Neuron *winner);
 void    connect_node(Neuron *n,Neuron *winner);
 
-int j = 0;
 int e[4] = {1,2,3,4};
 
 int main(void){
     int i;
-    float kyori;
+    int num = 0;                // ノード番号
+    float dis;
     Neuron N[100],*winner;
-    copy(&N[0],(float)e[0]);
+//    N[0]にノード番号num,葉ノードの数1,重みe[0]をコピー
+    copy(&N[0],(float)e[0], num);
     N[0].child   = NULL;
     N[0].brother = NULL;
     N[0].parent  = NULL;
-    for(i=1,j=1;i<4;i++) {
-//      e[i]とN[0]の重みの距離を代入
-        kyori = distance((float)e[i], N[0].weight);
-//      とりあえずwinnerにN[0]のポインタをもたせておく
+    i = 0;
+    while (i<4) {
+//      e[num]とN[0]の重みの距離を代入
+        dis = distance((float)e[i], N[0].weight);
+//      winnerにN[0](root)のポインタをもたせておく
         winner = &N[0];
 //      winnerのもつ子ノードと比較しe[i]との距離が最も近いものをwinnerにする
-        test(kyori,(float)e[i], winner);
+        test(dis,(float)e[i], winner);
 //      winnerが葉ノードであったとき
         if(is_leaf(winner)) {
-            copy(&N[j], (float)e[i]);
-            connect_node(&N[j], winner);
-            j++;
+            num++;
+            copy(&N[num], (float)e[i], num);
+            connect_node(&N[num], winner);
+//            j++;
         }
-        copy(&N[j], (float)e[i]);
-        connect_node(&N[j], winner);
-        j++;
-        update(winner, (float)e[i]);
+        num++;
+        copy(&N[num], (float)e[++i], num);
+        connect_node(&N[num], winner);
+//        j++;
+        update(winner);
     }
     printf("end");
     return 0;
 }
 
-void copy(Neuron *n,float e){
-    n->num      = j;
+void copy(Neuron *n,float e, int num){
+    n->num      = num;
     n->weight   = e;
     n->leafnum  = 1;
+    return;
 }
 
 int is_leaf(Neuron *ptr){
@@ -83,20 +91,40 @@ void test(float kyori, float e, Neuron *winner){
         }while(ptr != NULL);
         test(kyori, e, winner);
     }
+    return;
 }
 
-void update(Neuron *winner, float e){
-    float omomi = winner->weight;
-    while(winner != NULL){
-        winner->weight = omomi+(e-omomi)/(float)(winner->leafnum+1);
-        winner->leafnum++;
+void update(Neuron *winner){
+    Neuron *ptr;
+    int count;          // winnerの子ノードの個数
+    int leafnum;
+    float omomi;
+    
+    do {
+        count = leafnum = omomi = 0;       // 初期化
+        
+        // leafnum,weightを更新
+        ptr = winner->child;
+        do {
+            leafnum += ptr->leafnum;
+            omomi += ptr->weight;
+            ptr=ptr->brother;
+            count++;
+        }while(ptr != NULL);
+        
+        winner->leafnum = leafnum;
+        winner->weight = omomi/count;
+        
+//      winnerの親ノードで同じ処理を行う
         winner = winner->parent;
-    }
+    } while(winner != NULL);
+    
+    return;
 }
 
 void connect_node(Neuron *n,Neuron *winner){
-    n->child = NULL;
-    n->brother = NULL;
+//    n->child = NULL;
+//    n->brother = NULL;
     n->parent = winner;
     
     if (winner->child == NULL) {
@@ -108,4 +136,6 @@ void connect_node(Neuron *n,Neuron *winner){
     } else if (winner->child->brother->brother->brother == NULL) {
         winner->child->brother->brother->brother = n;
     }
+    
+    return;
 }
