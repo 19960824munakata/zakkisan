@@ -16,7 +16,7 @@ typedef struct neuron{
 void    copy(Neuron *n,float e, int num);
 int     is_leaf(Neuron *n);
 float   distance(float e,float weight);
-void    test(float kyori,float e,Neuron *winner);
+Neuron*    test(float kyori,float e,Neuron *winner);
 void    update(Neuron *winner);
 void    connect_node(Neuron *n,Neuron *winner);
 
@@ -33,24 +33,22 @@ int main(void){
     N[0].brother = NULL;
     N[0].parent  = NULL;
     i = 0;
-    while (i<4) {
+    while (i<3) {
 //      e[num]とN[0]の重みの距離を代入
         dis = distance((float)e[i], N[0].weight);
 //      winnerにN[0](root)のポインタをもたせておく
         winner = &N[0];
 //      winnerのもつ子ノードと比較しe[i]との距離が最も近いものをwinnerにする
-        test(dis,(float)e[i], winner);
+        winner = test(dis,(float)e[i], winner);
 //      winnerが葉ノードであったとき
         if(is_leaf(winner)) {
             num++;
             copy(&N[num], (float)e[i], num);
             connect_node(&N[num], winner);
-//            j++;
         }
         num++;
         copy(&N[num], (float)e[++i], num);
         connect_node(&N[num], winner);
-//        j++;
         update(winner);
     }
     printf("end");
@@ -76,7 +74,8 @@ float distance(float e, float weight){
     return fabsf(e-weight);
 }
 
-void test(float kyori, float e, Neuron *winner){
+// winnerを最も距離の短いノードに更新する
+Neuron* test(float kyori, float e, Neuron *winner){
     Neuron *ptr;
     float dis;
     ptr = winner->child;
@@ -89,9 +88,9 @@ void test(float kyori, float e, Neuron *winner){
             }
             ptr = ptr->brother;
         }while(ptr != NULL);
-        test(kyori, e, winner);
+        winner = test(kyori, e, winner);
     }
-    return;
+    return winner;
 }
 
 void update(Neuron *winner){
@@ -108,7 +107,7 @@ void update(Neuron *winner){
         do {
             leafnum += ptr->leafnum;
             omomi += ptr->weight;
-            ptr=ptr->brother;
+            ptr = ptr->brother;
             count++;
         }while(ptr != NULL);
         
@@ -123,8 +122,6 @@ void update(Neuron *winner){
 }
 
 void connect_node(Neuron *n,Neuron *winner){
-//    n->child = NULL;
-//    n->brother = NULL;
     n->parent = winner;
     
     if (winner->child == NULL) {
@@ -136,6 +133,19 @@ void connect_node(Neuron *n,Neuron *winner){
     } else if (winner->child->brother->brother->brother == NULL) {
         winner->child->brother->brother->brother = n;
     }
+    
+//    上のif文の塊はこんな感じのwhileを使えば書き直せそうなきがする(書いてあるのは未完成)
+    /***
+    Neuron *ptr;
+    ptr = winner->child;
+    while(1) {
+        if (ptr == NULL) {
+            ptr = n;
+            break;
+        }
+        ptr = ptr->brother;
+    }
+    ***/
     
     return;
 }
