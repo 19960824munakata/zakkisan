@@ -20,10 +20,9 @@ Neuron*    test(float kyori,float e,Neuron *winner);
 void    update(Neuron *winner);
 void    connect_node(Neuron *n,Neuron *winner);
 
-int e[4] = {1,2,3,4};
-
 int main(void){
     int i;
+    int e[4] = {1,2,4,3};
     int num = 0;                // ノード番号
     float dis;
     Neuron N[100],*winner;
