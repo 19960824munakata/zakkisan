@@ -20,20 +20,21 @@ Neuron*    test(float kyori,float e,Neuron *winner);
 void    update(Neuron *winner);
 void    connect_node(Neuron *n,Neuron *winner);
 void show(Neuron *);
+Neuron* get_nearest_node(Neuron *, float);
 void hyouji(Neuron *);
 
 int main(void){
     int i;
-    int e[4] = {1,3,2,4};
+    int e[4] = {1,2,3,4};
     int num = 0;                // ノード番号
     float dis;
-    Neuron N[100],*winner;
+    Neuron N[100], *answer, *winner;
     //    N[0]にノード番号num,葉ノードの数1,重みe[0]をコピー
     copy(&N[0],(float)e[0], num);
     N[0].child   = NULL;
     N[0].brother = NULL;
     N[0].parent  = NULL;
-    for (i=1;i<3;i++) {
+    for (i=1;i<4;i++) {
         //      e[num]とN[0]の重みの距離を代入
         dis = distance((float)e[i], N[0].weight);
         //      winnerにN[0](root)のポインタをもたせておく
@@ -52,7 +53,12 @@ int main(void){
         update(winner);
     }
 //    show(&N[0]);
-    printf("end");
+    
+    float data = 4;
+    
+    answer = get_nearest_node(N, data);
+    
+    printf("最も近いのは%.1fです。",answer->weight);
     return 0;
 }
 
@@ -154,24 +160,60 @@ void connect_node(Neuron *n,Neuron *winner){
 
 void show(Neuron *n){
     Neuron *ptr;
-    ptr=n->child;
-    if(ptr!=NULL){
-        while(ptr!=n){
-            while(ptr->child!=NULL){
-                ptr=ptr->child;      //子供がいる間、子供のアドレスへ移動
+    ptr = n->child;
+    if(ptr != NULL){
+        while(ptr != n){
+            while(ptr->child != NULL){
+                ptr = ptr->child;      //子供がいる間、子供のアドレスへ移動
             }
             hyouji(ptr);
-            while(ptr->brother==NULL){
+            while(ptr->brother == NULL){
                 ptr=ptr->parent;
                 hyouji(ptr);
-                if(ptr==n) break;
+                if(ptr == n){
+                    break;
+                }
             }
-            if(ptr!=n){
-                ptr=ptr->brother;
+            if(ptr != n){
+                ptr = ptr->brother;
             }
         }
     }
 }
+
+// detaと最も近い葉ノードを返す
+Neuron* get_nearest_node(Neuron *n, float data){
+    Neuron *ptr, *nearest;
+    float dis;
+    float min_distance = 100;
+    ptr = n->child;
+    if(ptr != NULL){
+        while(ptr != n){
+            while(ptr->child != NULL){
+                ptr = ptr->child;      //子供がいる間、子供のアドレスへ移動
+            }
+
+//            ここの式の重複を直したい
+            dis = distance(data, ptr->weight);
+            if (min_distance > dis) {
+                min_distance = dis;
+                nearest = ptr;
+            }
+            
+            while(ptr->brother == NULL){
+                ptr=ptr->parent;
+                if(ptr == n){
+                    break;
+                }
+            }
+            if(ptr != n){
+                ptr = ptr->brother;
+            }
+        }
+    }
+    return nearest;
+}
+
 
 void hyouji(Neuron *n){
     printf("num=%d,leafnum=%d,weight=%f\n",n->num,n->leafnum,n->weight);
