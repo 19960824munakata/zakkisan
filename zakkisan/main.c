@@ -19,37 +19,39 @@ float   distance(float e,float weight);
 Neuron*    test(float kyori,float e,Neuron *winner);
 void    update(Neuron *winner);
 void    connect_node(Neuron *n,Neuron *winner);
+void show(Neuron *);
+void hyouji(Neuron *);
 
 int main(void){
     int i;
-    int e[4] = {1,2,4,3};
+    int e[4] = {1,3,2,4};
     int num = 0;                // ノード番号
     float dis;
     Neuron N[100],*winner;
-//    N[0]にノード番号num,葉ノードの数1,重みe[0]をコピー
+    //    N[0]にノード番号num,葉ノードの数1,重みe[0]をコピー
     copy(&N[0],(float)e[0], num);
     N[0].child   = NULL;
     N[0].brother = NULL;
     N[0].parent  = NULL;
-    i = 0;
-    while (i<3) {
-//      e[num]とN[0]の重みの距離を代入
+    for (i=1;i<3;i++) {
+        //      e[num]とN[0]の重みの距離を代入
         dis = distance((float)e[i], N[0].weight);
-//      winnerにN[0](root)のポインタをもたせておく
+        //      winnerにN[0](root)のポインタをもたせておく
         winner = &N[0];
-//      winnerのもつ子ノードと比較しe[i]との距離が最も近いものをwinnerにする
+        //      winnerのもつ子ノードと比較しe[i]との距離が最も近いものをwinnerにする
         winner = test(dis,(float)e[i], winner);
-//      winnerが葉ノードであったとき
+        //      winnerが葉ノードであったとき
         if(is_leaf(winner)) {
             num++;
-            copy(&N[num], (float)e[i], num);
+            copy(&N[num], winner->weight, num);
             connect_node(&N[num], winner);
         }
         num++;
-        copy(&N[num], (float)e[++i], num);
+        copy(&N[num], (float)e[i], num);
         connect_node(&N[num], winner);
         update(winner);
     }
+//    show(&N[0]);
     printf("end");
     return 0;
 }
@@ -75,7 +77,8 @@ float distance(float e, float weight){
 
 // winnerを最も距離の短いノードに更新する
 Neuron* test(float kyori, float e, Neuron *winner){
-    Neuron *ptr;
+    Neuron *ptr,*n;
+    n = winner;
     float dis;
     ptr = winner->child;
     if(ptr != NULL){
@@ -87,33 +90,33 @@ Neuron* test(float kyori, float e, Neuron *winner){
             }
             ptr = ptr->brother;
         }while(ptr != NULL);
-        winner = test(kyori, e, winner);
+        if(winner != n){
+            winner = test(kyori, e, winner);
+        }
     }
     return winner;
 }
 
 void update(Neuron *winner){
     Neuron *ptr;
-    int count;          // winnerの子ノードの個数
     int leafnum;
     float omomi;
     
     do {
-        count = leafnum = omomi = 0;       // 初期化
+        leafnum = omomi = 0;       // 初期化
         
         // leafnum,weightを更新
         ptr = winner->child;
         do {
             leafnum += ptr->leafnum;
-            omomi += ptr->weight;
+            omomi += (ptr->weight * ptr->leafnum);
             ptr = ptr->brother;
-            count++;
         }while(ptr != NULL);
         
         winner->leafnum = leafnum;
-        winner->weight = omomi/count;
+        winner->weight = omomi/leafnum;
         
-//      winnerの親ノードで同じ処理を行う
+        //      winnerの親ノードで同じ処理を行う
         winner = winner->parent;
     } while(winner != NULL);
     
@@ -133,18 +136,52 @@ void connect_node(Neuron *n,Neuron *winner){
         winner->child->brother->brother->brother = n;
     }
     
-//    上のif文の塊はこんな感じのwhileを使えば書き直せそうなきがする(書いてあるのは未完成)
+    //    上のif文の塊はこんな感じのwhileを使えば書き直せそうなきがする(書いてあるのは未完成)
     /***
-    Neuron *ptr;
-    ptr = winner->child;
-    while(1) {
-        if (ptr == NULL) {
-            ptr = n;
-            break;
-        }
-        ptr = ptr->brother;
-    }
-    ***/
+     Neuron *ptr;
+     ptr = winner->child;
+     while(1) {
+     if (ptr == NULL) {
+     ptr = n;
+     break;
+     }
+     ptr = ptr->brother;
+     }
+     ***/
     
     return;
+}
+
+void show(Neuron *n){
+    Neuron *ptr;
+    ptr=n->child;
+    if(ptr!=NULL){
+        while(ptr!=n){
+            while(ptr->child!=NULL){
+                ptr=ptr->child;      //子供がいる間、子供のアドレスへ移動
+            }
+            hyouji(ptr);
+            while(ptr->brother==NULL){
+                ptr=ptr->parent;
+                hyouji(ptr);
+                if(ptr==n) break;
+            }
+            if(ptr!=n){
+                ptr=ptr->brother;
+            }
+        }
+    }
+}
+
+void hyouji(Neuron *n){
+    printf("num=%d,leafnum=%d,weight=%f\n",n->num,n->leafnum,n->weight);
+    if(n->parent!=NULL){
+        printf("parent=%d\n",n->parent->num);
+    }
+    if(n->brother!=NULL){
+        printf("brother=%d\n",n->brother->num);
+    }
+    if(n->child!=NULL){
+        printf("child=%d\n",n->child->num);
+    }
 }
