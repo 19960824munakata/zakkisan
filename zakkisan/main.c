@@ -73,6 +73,7 @@ void copy(Neuron *n,float *e,int out, int num){
     n->weight[1]=e[1];
     n->result = out;
     n->leafnum  = 1;
+    n->child = n->brother = n->parent = NULL;
     return;
 }
 
@@ -147,31 +148,18 @@ void update(Neuron *winner){
 }
 
 void connect_node(Neuron *n,Neuron *winner){
+    Neuron *ptr;
     n->parent = winner;
     
     if (winner->child == NULL) {
         winner->child = n;
-    } else if (winner->child->brother == NULL) {
-        winner->child->brother = n;
-    } else if (winner->child->brother->brother == NULL) {
-        winner->child->brother->brother = n;
-    } else if (winner->child->brother->brother->brother == NULL) {
-        winner->child->brother->brother->brother = n;
+    } else {
+        ptr = winner->child;
+        while(ptr->brother != NULL) {
+            ptr = ptr->brother;
+        }
+        ptr->brother = n;
     }
-    
-    //    上のif文の塊はこんな感じのwhileを使えば書き直せそうなきがする(書いてあるのは未完成)
-    /***
-     Neuron *ptr;
-     ptr = winner->child;
-     while(1) {
-     if (ptr == NULL) {
-     ptr = n;
-     break;
-     }
-     ptr = ptr->brother;
-     }
-     ***/
-    
     return;
 }
 
