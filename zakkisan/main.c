@@ -25,44 +25,84 @@ void show(Neuron *);
 void hyouji(Neuron *);
 
 int main(void){
-    int i;
-    float e[4][2] = {{0,0},{0,1},{1,0},{1,1}};
+    int i,j,count0=0,count1=0;
+    float probability0,probability1;
+    float data[2] = {0.5,0.5};
+    
+    float e[24][4][2] = {{{0,0},{0,1},{1,0},{1,1}},
+        {{0,0},{0,1},{1,1},{1,0}},
+        {{0,0},{1,0},{0,1},{1,1}},
+        {{0,0},{1,0},{1,1},{0,1}},
+        {{0,0},{1,1},{0,1},{1,0}},
+        {{0,0},{1,1},{1,0},{0,1}},
+        {{0,1},{0,0},{1,0},{1,1}},
+        {{0,1},{0,0},{1,1},{1,0}},
+        {{0,1},{1,0},{0,0},{1,1}},
+        {{0,1},{1,0},{1,1},{0,0}},
+        {{0,1},{1,1},{0,0},{1,0}},
+        {{0,1},{1,1},{1,0},{0,0}},
+        {{1,0},{0,0},{0,1},{1,1}},
+        {{1,0},{0,0},{1,1},{0,1}},
+        {{1,0},{0,1},{0,0},{1,1}},
+        {{1,0},{0,1},{1,1},{0,0}},
+        {{1,0},{1,1},{0,0},{0,1}},
+        {{1,0},{1,1},{0,1},{0,0}},
+        {{1,1},{0,0},{0,1},{1,0}},
+        {{1,1},{0,0},{1,0},{0,1}},
+        {{1,1},{0,1},{0,0},{1,0}},
+        {{1,1},{0,1},{1,0},{0,0}},
+        {{1,1},{1,0},{0,0},{0,1}},
+        {{1,1},{1,0},{0,1},{0,0}}};
+    
     int out[4] = {0, 1, 1, 0};
     int num = 0;                // ノード番号
     float dis;
+    
     Neuron N[100],*winner,*answer;
     //    N[0]にノード番号num,葉ノードの数1,重みe[0]をコピー
-    copy(&N[0],e[0],out[0],num);
+    copy(&N[0],e[0][0],out[0],num);
     N[0].child   = NULL;
     N[0].brother = NULL;
     N[0].parent  = NULL;
-    for (i=1;i<4;i++) {
-        
-        //      e[num]とN[0]の重みの距離を代入
-        dis = distance(e[i], N[0].weight);
-        //      winnerにN[0](root)のポインタをもたせておく
-        winner = &N[0];
-        //      winnerのもつ子ノードと比較しe[i]との距離が最も近いものをwinnerにする
-        winner = test(dis,e[i], winner);
-        //      winnerが葉ノードであったとき
-        if(is_leaf(winner)) {
+    
+    for (j=0;j<24;j++) {
+        for (i=0;i<4;i++) {
+            //      e[num]とN[0]の重みの距離を代入
+            dis = distance(e[j][i], N[0].weight);
+            //      winnerにN[0](root)のポインタをもたせておく
+            winner = &N[0];
+            //      winnerのもつ子ノードと比較しe[i]との距離が最も近いものをwinnerにする
+            winner = test(dis,e[j][i], winner);
+            //      winnerが葉ノードであったとき
+            if(is_leaf(winner)) {
+                num++;
+                copy(&N[num], winner->weight, winner->result, num);
+                connect_node(&N[num], winner);
+            }
             num++;
-            copy(&N[num], winner->weight, winner->result, num);
+            copy(&N[num], e[j][i], out[i], num);
             connect_node(&N[num], winner);
+            update(winner);
         }
-        num++;
-        copy(&N[num], e[i], out[i], num);
-        connect_node(&N[num], winner);
-        update(winner);
+        
+        show(&N[0]);
+        
+        answer = get_nearest_node(N, data);
+        
+        printf("最も近いのは%dです。\n",answer->result);
+        
+        if (answer->result == 0) {
+            count0++;
+        }else if (answer->result == 1){
+            count1++;
+        }
+        
     }
-    show(&N[0]);
     
-    float data[2] = {0.5,0.5};
+    probability0 = (count0/24)*100;
+    probability1 = (count1/24)*100;
     
-    answer = get_nearest_node(N, data);
-    
-    printf("最も近いのは%dです。\n",answer->result);
-    
+    printf("[%.1f,%.1f]が1の確率は%.1f[％],0の確率は%.1f[％]です。\n",data[0],data[1],probability1,probability0);
     printf("end");
     return 0;
 }
@@ -148,18 +188,31 @@ void update(Neuron *winner){
 }
 
 void connect_node(Neuron *n,Neuron *winner){
-    Neuron *ptr;
     n->parent = winner;
     
     if (winner->child == NULL) {
         winner->child = n;
-    } else {
-        ptr = winner->child;
-        while(ptr->brother != NULL) {
-            ptr = ptr->brother;
-        }
-        ptr->brother = n;
+    } else if (winner->child->brother == NULL) {
+        winner->child->brother = n;
+    } else if (winner->child->brother->brother == NULL) {
+        winner->child->brother->brother = n;
+    } else if (winner->child->brother->brother->brother == NULL) {
+        winner->child->brother->brother->brother = n;
     }
+    
+    //    上のif文の塊はこんな感じのwhileを使えば書き直せそうなきがする(書いてあるのは未完成)
+    /***
+     Neuron *ptr;
+     ptr = winner->child;
+     while(1) {
+     if (ptr == NULL) {
+     ptr = n;
+     break;
+     }
+     ptr = ptr->brother;
+     }
+     ***/
+    
     return;
 }
 
