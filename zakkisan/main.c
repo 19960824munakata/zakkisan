@@ -20,14 +20,14 @@ float   distance(float *e,float *weight);
 Neuron*    test(float kyori,float *e,Neuron *winner);
 void    update(Neuron *winner);
 void    connect_node(Neuron *n,Neuron *winner);
-Neuron* get_nearest_node(Neuron*, float*);
+Neuron* get_perhaps_nearest_node(Neuron*, float*);
 void show(Neuron *);
 void hyouji(Neuron *);
 
 int main(void){
     int i,j,count0=0,count1=0;
     float probability0,probability1;
-    float data[2] = {0.5,0.5};
+    float data[2] = {0.2,0.5};
     
     float e[24][4][2] = {{{0,0},{0,1},{1,0},{1,1}},
         {{0,0},{0,1},{1,1},{1,0}},
@@ -87,7 +87,7 @@ int main(void){
         
         show(&N[0]);
         
-        answer = get_nearest_node(N, data);
+        answer = get_perhaps_nearest_node(N, data);
         
         printf("最も近いのは%dです。\n",answer->result);
         
@@ -239,38 +239,31 @@ void show(Neuron *n){
     }
 }
 
-// detaと最も近い葉ノードを返す
-Neuron* get_nearest_node(Neuron *n, float *data){
-    Neuron *ptr, *nearest;
-    float dis;
-    float min_distance = 100;
-    ptr = n->child;
-    if(ptr != NULL){
-        while(ptr != n){
-            while(ptr->child != NULL){
-                ptr = ptr->child;      //子供がいる間、子供のアドレスへ移動
-            }
-            
-            //            ここの式の重複を直したい
-            dis = distance(data, ptr->weight);
+// dataとおそらく最も近いノードを返す
+Neuron* get_perhaps_nearest_node(Neuron *n, float *data){
+    Neuron *nearest = NULL, *ptr;
+    float min_distance, dis;
+
+    // 葉ノードまで進んだらそのまま返す
+    if (n->child == NULL) {
+        return n;
+    } else {
+        ptr = n->child;
+        min_distance = distance(ptr->weight, data);
+        nearest = ptr;
+        while (ptr->brother != NULL) {
+            dis = distance(ptr->brother->weight, data);
             if (min_distance > dis) {
                 min_distance = dis;
                 nearest = ptr;
             }
-            
-            while(ptr->brother == NULL){
-                ptr=ptr->parent;
-                if(ptr == n){
-                    break;
-                }
-                
-            }
-            if(ptr!=n){
-                ptr=ptr->brother;
-            }
+            ptr = ptr->brother;
         }
+        
+        nearest = get_perhaps_nearest_node(nearest, data);
+        
+        return nearest;
     }
-    return nearest;
 }
 
 void hyouji(Neuron *n){
