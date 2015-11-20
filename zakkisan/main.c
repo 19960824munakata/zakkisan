@@ -28,7 +28,6 @@ void free_tree(Neuron *);
 
 int main(void){
     int i,j,count0=0,count1=0;
-    float probability0,probability1;
     float data[2] = {0.5,0.5};
     
     float e[24][4][2] = {
@@ -67,7 +66,7 @@ int main(void){
         num = 0;
         root = create_node(e[0][0],out[0],num);
         
-        for (i=0;i<4;i++) {
+        for (i=1;i<4;i++) {
             //      e[num]とN[0]の重みの距離を代入
             dis = distance(e[j][i], root->weight);
             //      winnerにN[0](root)のポインタをもたせておく
@@ -100,10 +99,7 @@ int main(void){
         free_tree(root);
     }
     
-    probability0 = (count0/24)*100;
-    probability1 = (count1/24)*100;
-    
-    printf("[%.1f,%.1f]が1の確率は%.1f[％],0の確率は%.1f[％]です。\n",data[0],data[1],probability1,probability0);
+    printf("[%.1f,%.1f]が1の確率は%.1f[％],0の確率は%.1f[％]です。\n",data[0],data[1],(float)(count0/24)*100,(float)(count1/24)*100);
     printf("end");
     return 0;
 }
@@ -303,13 +299,15 @@ void free_tree(Neuron *root){
             }
             temp = *ptr;             // ptrをtempに退避させる
             free(ptr);
+            ptr = NULL;
             while(temp.brother==NULL){
                 ptr=temp.parent;
                 temp = *ptr;
+                free(ptr);
                 if(ptr == root){
                     break;
                 }
-                free(ptr);
+                ptr = NULL;
             }
             if(temp.num != root->num){
                 ptr = temp.brother;
