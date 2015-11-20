@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 
 // issue:rootノードが存在しない
@@ -14,7 +15,7 @@ typedef struct neuron{
     struct  neuron *parent;
 }Neuron;
 
-void    copy(Neuron *n, float *e, int out, int num);
+Neuron*    create_node(float *e, int out, int num);
 int     is_leaf(Neuron *n);
 float   distance(float *e,float *weight);
 Neuron*    test(float kyori,float *e,Neuron *winner);
@@ -23,13 +24,14 @@ void    connect_node(Neuron *n,Neuron *winner);
 Neuron* get_perhaps_nearest_node(Neuron*, float*);
 void show(Neuron *);
 void hyouji(Neuron *);
+void free_tree(Neuron *);
 
 int main(void){
     int i,j,count0=0,count1=0;
-    float probability0,probability1;
     float data[2] = {0.2,0.5};
     
-    float e[24][4][2] = {{{0,0},{0,1},{1,0},{1,1}},
+    float e[24][4][2] = {
+        {{0,0},{0,1},{1,0},{1,1}},
         {{0,0},{0,1},{1,1},{1,0}},
         {{0,0},{1,0},{0,1},{1,1}},
         {{0,0},{1,0},{1,1},{0,1}},
@@ -52,42 +54,40 @@ int main(void){
         {{1,1},{0,1},{0,0},{1,0}},
         {{1,1},{0,1},{1,0},{0,0}},
         {{1,1},{1,0},{0,0},{0,1}},
-        {{1,1},{1,0},{0,1},{0,0}}};
+        {{1,1},{1,0},{0,1},{0,0}}
+    };
     
     int out[4] = {0, 1, 1, 0};
-    int num = 0;                // ノード番号
+    int num;                // ノード番号
     float dis;
-    
-    Neuron N[100],*winner,*answer;
-    //    N[0]にノード番号num,葉ノードの数1,重みe[0]をコピー
-    copy(&N[0],e[0][0],out[0],num);
-    N[0].child   = NULL;
-    N[0].brother = NULL;
-    N[0].parent  = NULL;
-    
+    Neuron *root,*winner,*answer, *n;
+
     for (j=0;j<24;j++) {
-        for (i=0;i<4;i++) {
+        num = 0;
+        root = create_node(e[0][0],out[0],num);
+        
+        for (i=1;i<4;i++) {
             //      e[num]とN[0]の重みの距離を代入
-            dis = distance(e[j][i], N[0].weight);
+            dis = distance(e[j][i], root->weight);
             //      winnerにN[0](root)のポインタをもたせておく
-            winner = &N[0];
+            winner = root;
             //      winnerのもつ子ノードと比較しe[i]との距離が最も近いものをwinnerにする
             winner = test(dis,e[j][i], winner);
             //      winnerが葉ノードであったとき
             if(is_leaf(winner)) {
                 num++;
-                copy(&N[num], winner->weight, winner->result, num);
-                connect_node(&N[num], winner);
+                n = create_node(winner->weight, winner->result, num);
+                connect_node(n, winner);
             }
             num++;
-            copy(&N[num], e[j][i], out[i], num);
-            connect_node(&N[num], winner);
+            n = create_node(e[j][i], out[i], num);
+            connect_node(n, winner);
             update(winner);
         }
         
-        show(&N[0]);
+        show(root);
         
-        answer = get_perhaps_nearest_node(N, data);
+        answer = get_perhaps_nearest_node(root, data);
         
         printf("最も近いのは%dです。\n",answer->result);
         
@@ -96,25 +96,23 @@ int main(void){
         }else if (answer->result == 1){
             count1++;
         }
-        
+        free_tree(root);
     }
     
-    probability0 = (count0/24)*100;
-    probability1 = (count1/24)*100;
-    
-    printf("[%.1f,%.1f]が1の確率は%.1f[％],0の確率は%.1f[％]です。\n",data[0],data[1],probability1,probability0);
+    printf("[%.1f,%.1f]が1の確率は%.1f[％],0の確率は%.1f[％]です。\n",data[0],data[1],(float)(count0/24)*100,(float)(count1/24)*100);
     printf("end");
     return 0;
 }
 
-void copy(Neuron *n,float *e,int out, int num){
+Neuron* create_node(float *e,int out, int num){
+    Neuron* n = (Neuron *)calloc(1, sizeof(Neuron));
     n->num      = num;
     n->weight[0]= e[0];
     n->weight[1]=e[1];
     n->result = out;
     n->leafnum  = 1;
     n->child = n->brother = n->parent = NULL;
-    return;
+    return n;
 }
 
 int is_leaf(Neuron *ptr){
@@ -188,31 +186,35 @@ void update(Neuron *winner){
 }
 
 void connect_node(Neuron *n,Neuron *winner){
-    n->parent = winner;
-    
-    if (winner->child == NULL) {
-        winner->child = n;
-    } else if (winner->child->brother == NULL) {
-        winner->child->brother = n;
-    } else if (winner->child->brother->brother == NULL) {
-        winner->child->brother->brother = n;
-    } else if (winner->child->brother->brother->brother == NULL) {
-        winner->child->brother->brother->brother = n;
+    if (winner == NULL) {
+        n->child = n->brother = n->parent = NULL;
+        puts("error:connect_nodeの第2引数にNULLが入りました。");
+    } else {
+        n->parent = winner;
+        
+        if (winner->child == NULL) {
+            winner->child = n;
+        } else if (winner->child->brother == NULL) {
+            winner->child->brother = n;
+        } else if (winner->child->brother->brother == NULL) {
+            winner->child->brother->brother = n;
+        } else if (winner->child->brother->brother->brother == NULL) {
+            winner->child->brother->brother->brother = n;
+        }
+        
+        //    上のif文の塊はこんな感じのwhileを使えば書き直せそうなきがする(書いてあるのは未完成)
+        /***
+         Neuron *ptr;
+         ptr = winner->child;
+         while(1) {
+         if (ptr == NULL) {
+         ptr = n;
+         break;
+         }
+         ptr = ptr->brother;
+         }
+         ***/
     }
-    
-    //    上のif文の塊はこんな感じのwhileを使えば書き直せそうなきがする(書いてあるのは未完成)
-    /***
-     Neuron *ptr;
-     ptr = winner->child;
-     while(1) {
-     if (ptr == NULL) {
-     ptr = n;
-     break;
-     }
-     ptr = ptr->brother;
-     }
-     ***/
-    
     return;
 }
 
@@ -276,5 +278,33 @@ void hyouji(Neuron *n){
     }
     if(n->child!=NULL){
         printf("child=%d\n",n->child->num);
+    }
+}
+
+// root以下のノードをすべて解放
+void free_tree(Neuron *root){
+    Neuron *ptr, temp;
+    ptr=root->child;
+    if(ptr!=NULL){
+        while(ptr!=root){
+            while(ptr->child!=NULL){
+                ptr=ptr->child;      // 子供がいる間、子供のアドレスへ移動
+            }
+            temp = *ptr;             // ptrをtempに退避させる
+            free(ptr);
+            ptr = NULL;
+            while(temp.brother==NULL){
+                ptr=temp.parent;
+                temp = *ptr;
+                free(ptr);
+                if(ptr == root){
+                    break;
+                }
+                ptr = NULL;
+            }
+            if(temp.num != root->num){
+                ptr = temp.brother;
+            }
+        }
     }
 }
