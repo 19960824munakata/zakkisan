@@ -31,7 +31,8 @@ int main(void){
     float probability0,probability1;
     float data[2] = {0.5,0.5};
     
-    float e[24][4][2] = {{{0,0},{0,1},{1,0},{1,1}},
+    float e[24][4][2] = {
+        {{0,0},{0,1},{1,0},{1,1}},
         {{0,0},{0,1},{1,1},{1,0}},
         {{0,0},{1,0},{0,1},{1,1}},
         {{0,0},{1,0},{1,1},{0,1}},
@@ -54,23 +55,23 @@ int main(void){
         {{1,1},{0,1},{0,0},{1,0}},
         {{1,1},{0,1},{1,0},{0,0}},
         {{1,1},{1,0},{0,0},{0,1}},
-        {{1,1},{1,0},{0,1},{0,0}}};
+        {{1,1},{1,0},{0,1},{0,0}}
+    };
     
     int out[4] = {0, 1, 1, 0};
-    int num = 0;                // ノード番号
+    int num;                // ノード番号
     float dis;
-    
-    Neuron root,*winner,*answer, *n;
-    //    N[0]にノード番号num,葉ノードの数1,重みe[0]をコピー
-    root = *create_node(e[0][0],out[0],num);
-    connect_node(&root, NULL);
-    
+    Neuron *root,*winner,*answer, *n;
+
     for (j=0;j<24;j++) {
+        num = 0;
+        root = create_node(e[0][0],out[0],num);
+        
         for (i=0;i<4;i++) {
             //      e[num]とN[0]の重みの距離を代入
-            dis = distance(e[j][i], root.weight);
+            dis = distance(e[j][i], root->weight);
             //      winnerにN[0](root)のポインタをもたせておく
-            winner = &root;
+            winner = root;
             //      winnerのもつ子ノードと比較しe[i]との距離が最も近いものをwinnerにする
             winner = test(dis,e[j][i], winner);
             //      winnerが葉ノードであったとき
@@ -85,9 +86,9 @@ int main(void){
             update(winner);
         }
         
-        show(&root);
+        show(root);
         
-        answer = get_nearest_node(&root, data);
+        answer = get_nearest_node(root, data);
         
         printf("最も近いのは%dです。\n",answer->result);
         
@@ -96,7 +97,7 @@ int main(void){
         }else if (answer->result == 1){
             count1++;
         }
-        
+        free_tree(root);
     }
     
     probability0 = (count0/24)*100;
@@ -104,7 +105,6 @@ int main(void){
     
     printf("[%.1f,%.1f]が1の確率は%.1f[％],0の確率は%.1f[％]です。\n",data[0],data[1],probability1,probability0);
     printf("end");
-    free_tree(&root);
     return 0;
 }
 
@@ -292,7 +292,7 @@ void hyouji(Neuron *n){
     }
 }
 
-// 木構造になっているノードすべてを解放
+// root以下のノードをすべて解放
 void free_tree(Neuron *root){
     Neuron *ptr, temp;
     ptr=root->child;
