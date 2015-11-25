@@ -186,34 +186,17 @@ void update(Neuron *winner){
 }
 
 void connect_node(Neuron *n,Neuron *winner){
-    if (winner == NULL) {
-        n->child = n->brother = n->parent = NULL;
-        puts("error:connect_nodeの第2引数にNULLが入りました。");
+    Neuron *ptr;
+    n->parent = winner;
+    
+    if (winner->child == NULL) {
+        winner->child = n;
     } else {
-        n->parent = winner;
-        
-        if (winner->child == NULL) {
-            winner->child = n;
-        } else if (winner->child->brother == NULL) {
-            winner->child->brother = n;
-        } else if (winner->child->brother->brother == NULL) {
-            winner->child->brother->brother = n;
-        } else if (winner->child->brother->brother->brother == NULL) {
-            winner->child->brother->brother->brother = n;
+        ptr = winner->child;
+        while(ptr->brother != NULL) {
+            ptr = ptr->brother;
         }
-        
-        //    上のif文の塊はこんな感じのwhileを使えば書き直せそうなきがする(書いてあるのは未完成)
-        /***
-         Neuron *ptr;
-         ptr = winner->child;
-         while(1) {
-         if (ptr == NULL) {
-         ptr = n;
-         break;
-         }
-         ptr = ptr->brother;
-         }
-         ***/
+        ptr->brother = n;
     }
     return;
 }
