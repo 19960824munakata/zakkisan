@@ -62,17 +62,17 @@ int main(void){
     float dis;
     Neuron *root,*winner,*answer, *n;
 
-    for (j=0;j<24;j++) {
+    for (i=0;i<24;i++) {
         num = 0;
         root = create_node(e[0][0],out[0],num);
         
-        for (i=1;i<4;i++) {
+        for (j=1;j<4;j++) {
             //      e[num]とN[0]の重みの距離を代入
-            dis = distance(e[j][i], root->weight);
-            //      winnerにN[0](root)のポインタをもたせておく
+            dis = distance(e[i][j], root->weight);
+            //      winnerにrootのポインタをもたせておく
             winner = root;
-            //      winnerのもつ子ノードと比較しe[i]との距離が最も近いものをwinnerにする
-            winner = test(dis,e[j][i], winner);
+            //      rootのもつ子ノードと比較しe[i]との距離が最も近いものをwinnerにする
+            winner = test(dis,e[i][j], winner);
             //      winnerが葉ノードであったとき
             if(is_leaf(winner)) {
                 num++;
@@ -80,7 +80,7 @@ int main(void){
                 connect_node(n, winner);
             }
             num++;
-            n = create_node(e[j][i], out[i], num);
+            n = create_node(e[i][j], out[j], num);
             connect_node(n, winner);
             update(winner);
         }
