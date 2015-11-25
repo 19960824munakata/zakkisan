@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
 
 // issue:rootノードが存在しない
 // issue:子ノードを作るときの処理が間違っている
@@ -27,6 +28,9 @@ void hyouji(Neuron *);
 void free_tree(Neuron *);
 
 int main(void){
+    clock_t start,end;
+    start = clock();
+    
     int i,j,count0=0,count1=0;
     float data[2] = {0.2,0.5};
     
@@ -69,10 +73,9 @@ int main(void){
         for (j=1;j<4;j++) {
             //      e[num]とN[0]の重みの距離を代入
             dis = distance(e[i][j], root->weight);
-            //      winnerにrootのポインタをもたせておく
-            winner = root;
-            //      rootのもつ子ノードと比較しe[i]との距離が最も近いものをwinnerにする
-            winner = test(dis,e[i][j], winner);
+            
+            //      rootのもつ子ノードと比較しe[i][j]との距離が最も近いものをwinnerにする
+            winner = test(dis,e[i][j], root);
             //      winnerが葉ノードであったとき
             if(is_leaf(winner)) {
                 num++;
@@ -100,7 +103,8 @@ int main(void){
     }
     
     printf("[%.1f,%.1f]が1の確率は%.1f[％],0の確率は%.1f[％]です。\n",data[0],data[1],(float)(count0/24)*100,(float)(count1/24)*100);
-    printf("end");
+    end = clock();
+    printf("実行時間:%f[ms]\n",((double)(end-start)/CLOCKS_PER_SEC)*1000);
     return 0;
 }
 
