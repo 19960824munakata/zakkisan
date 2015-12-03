@@ -31,8 +31,10 @@ int main(void){
     clock_t start,end;
     start = clock();
     
-    int i,j,count0=0,count1=0;
-    float data[2] = {0.2,0.5};
+    int i,j;
+    int count0=0;
+    int count1=0;
+    float data[2] = {0.8,0.5};
     
     float e[24][4][2] = {
         {{0,0},{0,1},{1,0},{1,1}},
@@ -61,14 +63,41 @@ int main(void){
         {{1,1},{1,0},{0,1},{0,0}}
     };
     
-    int out[4] = {0, 1, 1, 0};
+    int out[24][4] = {
+        {0, 1, 1, 0},
+        {0, 1, 0, 1},
+        {0, 1, 1, 0},
+        {0, 1, 0, 1},
+        {0, 0, 1, 1},
+        {0, 0, 1, 1},
+        {1, 0, 1, 0},
+        {1, 0, 0, 1},
+        {1, 1, 0, 0},
+        {1, 1, 0, 0},
+        {1, 0, 0, 1},
+        {1, 0, 1, 0},
+        {1, 0, 1, 0},
+        {1, 0, 0, 1},
+        {1, 1, 0, 0},
+        {1, 1, 0, 0},
+        {1, 0, 0, 1},
+        {1, 0, 1, 0},
+        {0, 0, 1, 1},
+        {0, 0, 1, 1},
+        {0, 1, 0, 1},
+        {0, 1, 1, 0},
+        {0, 1, 0, 1},
+        {0, 1, 1, 0}
+    };
+    
+    
     int num;                // ノード番号
     float dis;
     Neuron *root,*winner,*answer, *n;
-
+    
     for (i=0;i<24;i++) {
         num = 0;
-        root = create_node(e[0][0],out[0],num);
+        root = create_node(e[0][0],out[0][0],num);
         
         for (j=1;j<4;j++) {
             //      e[num]とN[0]の重みの距離を代入
@@ -83,7 +112,7 @@ int main(void){
                 connect_node(n, winner);
             }
             num++;
-            n = create_node(e[i][j], out[j], num);
+            n = create_node(e[i][j], out[i][j], num);
             connect_node(n, winner);
             update(winner);
         }
@@ -95,14 +124,14 @@ int main(void){
         printf("最も近いのは%dです。\n",answer->result);
         
         if (answer->result == 0) {
-            count0++;
+            ++count0;
         }else if (answer->result == 1){
-            count1++;
+            ++count1;
         }
         free_tree(root);
     }
     
-    printf("[%.1f,%.1f]が1の確率は%.1f[％],0の確率は%.1f[％]です。\n",data[0],data[1],(float)(count0/24)*100,(float)(count1/24)*100);
+    printf("[%.1f,%.1f]が1の確率は%.1f[％],0の確率は%.1f[％]です。\n",data[0],data[1],(float)(count1/24.0)*100,(float)(count0/24.0)*100);
     end = clock();
     printf("実行時間:%f[ms]\n",((double)(end-start)/CLOCKS_PER_SEC)*1000);
     return 0;
@@ -232,7 +261,7 @@ void show(Neuron *n){
 Neuron* get_perhaps_nearest_node(Neuron *n, float *data){
     Neuron *nearest = NULL, *ptr;
     float min_distance, dis;
-
+    
     // 葉ノードまで進んだらそのまま返す
     if (n->child == NULL) {
         return n;
