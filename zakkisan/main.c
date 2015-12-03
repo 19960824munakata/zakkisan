@@ -16,7 +16,7 @@ typedef struct neuron{
     struct  neuron *parent;
 }Neuron;
 
-Neuron*    create_node(float *e, int out, int num);
+Neuron*    create_node(float *e, int out, int num, int leafnum);
 int     is_leaf(Neuron *n);
 float   distance(float *e,float *weight);
 Neuron*    test(float kyori,float *e,Neuron *winner);
@@ -26,14 +26,15 @@ Neuron* get_perhaps_nearest_node(Neuron*, float*);
 void show(Neuron *);
 void hyouji(Neuron *);
 void free_tree(Neuron *);
+void branch_hunter(Neuron *);
+
+int count0=0,count1=0;
 
 int main(void){
     clock_t start,end;
     start = clock();
     
     int i,j;
-    int count0=0;
-    int count1=0;
     float data[2] = {0.8,0.5};
     
     float e[24][4][2] = {
@@ -97,7 +98,7 @@ int main(void){
     
     for (i=0;i<24;i++) {
         num = 0;
-        root = create_node(e[0][0],out[0][0],num);
+        root = create_node(e[0][0],out[0][0],num,1);
         
         for (j=1;j<4;j++) {
             //      e[num]とN[0]の重みの距離を代入
@@ -108,13 +109,14 @@ int main(void){
             //      winnerが葉ノードであったとき
             if(is_leaf(winner)) {
                 num++;
-                n = create_node(winner->weight, winner->result, num);
+                n = create_node(winner->weight, winner->result, num , winner->leafnum);
                 connect_node(n, winner);
             }
             num++;
-            n = create_node(e[i][j], out[i][j], num);
+            n = create_node(e[i][j], out[i][j], num ,1);
             connect_node(n, winner);
             update(winner);
+            branch_hunter(winner);
         }
         
         show(root);
@@ -137,13 +139,13 @@ int main(void){
     return 0;
 }
 
-Neuron* create_node(float *e,int out, int num){
+Neuron* create_node(float *e,int out, int num, int leafnum){
     Neuron* n = (Neuron *)calloc(1, sizeof(Neuron));
     n->num      = num;
     n->weight[0]= e[0];
     n->weight[1]=e[1];
     n->result = out;
-    n->leafnum  = 1;
+    n->leafnum  = leafnum;
     n->child = n->brother = n->parent = NULL;
     return n;
 }
@@ -161,7 +163,7 @@ float distance(float *e,float *weight){
     double x,y;
     x=(double)e[0]-(double)weight[0];
     y=(double)e[1]-(double)weight[1];
-    dis=(float)sqrt(x*x+y*y);
+    dis=(float)sqrt(pow(x,2.0)+pow(y,2.0));
     return fabsf(dis);
 }
 
@@ -299,29 +301,42 @@ void hyouji(Neuron *n){
 
 // root以下のノードをすべて解放
 void free_tree(Neuron *root){
-    Neuron *ptr, temp1,temp2;
-    temp2 = *root;                   // 後でrootの中身をチェックするためにtemp2を退避
+    Neuron *ptr, temp;
     ptr=root->child;
     if(ptr!=NULL){
         while(ptr!=root){
             while(ptr->child!=NULL){
                 ptr=ptr->child;      // 子供がいる間、子供のアドレスへ移動
             }
-            temp1 = *ptr;             // ptrをtemp1に退避させる
+            temp = *ptr;             // ptrをtempに退避させる
             free(ptr);
             ptr = NULL;
-            while(temp1.brother==NULL){
-                ptr=temp1.parent;
-                temp1 = *ptr;
+            while(temp.brother==NULL){
+                ptr=temp.parent;
+                temp = *ptr;
                 free(ptr);
                 if(ptr == root){
                     break;
                 }
                 ptr = NULL;
             }
-            if(temp1.num != temp2.num){
-                ptr = temp1.brother;
+            if(temp.parent != NULL){      // ptr == root のときfalseになる
+                ptr = temp.brother;
             }
+        }
+    }
+}
+
+void branch_hunter(Neuron *n){
+    Neuron *ptr;
+    if(n->child != NULL){
+        ptr = n->child;
+        if(ptr->brother->brother == NULL && ptr->result == ptr->brother->result){
+            n->child = NULL;
+            //	    枝を開放
+            free(ptr->brother);
+            free(ptr);
+            
         }
     }
 }
