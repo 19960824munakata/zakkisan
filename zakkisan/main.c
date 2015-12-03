@@ -19,7 +19,7 @@ typedef struct neuron{
 Neuron*    create_node(float *e, int out, int num);
 int     is_leaf(Neuron *n);
 float   distance(float *e,float *weight);
-Neuron*    test(float kyori,float *e,Neuron *winner);
+Neuron*    test(float *e,Neuron *winner);
 void    update(Neuron *winner);
 void    connect_node(Neuron *n,Neuron *winner);
 Neuron* get_perhaps_nearest_node(Neuron*, float*);
@@ -92,7 +92,6 @@ int main(void){
     
     
     int num;                // ノード番号
-    float dis;
     Neuron *root,*winner,*answer, *n;
     
     for (i=0;i<24;i++) {
@@ -100,11 +99,8 @@ int main(void){
         root = create_node(e[0][0],out[0][0],num);
         
         for (j=1;j<4;j++) {
-            //      e[num]とN[0]の重みの距離を代入
-            dis = distance(e[i][j], root->weight);
-            
-            //      rootのもつ子ノードと比較しe[i][j]との距離が最も近いものをwinnerにする
-            winner = test(dis,e[i][j], root);
+            //      rootのもつ子ノードと比較しe[i][j]との距離が最も近いものを探索する
+            winner = test(e[i][j], root);
             //      winnerが葉ノードであったとき
             if(is_leaf(winner)) {
                 num++;
@@ -141,10 +137,10 @@ Neuron* create_node(float *e,int out, int num){
     Neuron* n = (Neuron *)calloc(1, sizeof(Neuron));
     n->num      = num;
     n->weight[0]= e[0];
-    n->weight[1]=e[1];
-    n->result = out;
+    n->weight[1]= e[1];
+    n->result   = out;
     n->leafnum  = 1;
-    n->child = n->brother = n->parent = NULL;
+    n->child    = n->brother = n->parent = NULL;
     return n;
 }
 
@@ -166,26 +162,27 @@ float distance(float *e,float *weight){
 }
 
 
-// winnerを最も距離の短いノードに更新する
-Neuron* test(float kyori, float *e, Neuron *winner){
+// winnerを最も距離の短いノードを探索する
+Neuron* test(float *e, Neuron *root){
     Neuron *ptr,*n;
-    n = winner;
-    float dis;
-    ptr = winner->child;
+    n = root;
+    float dis,kyori;
+    kyori = distance(e, root->weight);
+    ptr = root->child;
     if(ptr != NULL){
         do{
             dis = distance(e, ptr->weight);
             if(dis < kyori) {
                 kyori = dis;
-                winner = ptr;
+                root = ptr;
             }
             ptr = ptr->brother;
         }while(ptr != NULL);
-        if(winner != n){
-            winner = test(kyori, e, winner);
+        if(root != n){
+            root = test(e, root);
         }
     }
-    return winner;
+    return root;
 }
 
 void update(Neuron *winner){
