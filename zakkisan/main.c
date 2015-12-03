@@ -299,27 +299,28 @@ void hyouji(Neuron *n){
 
 // root以下のノードをすべて解放
 void free_tree(Neuron *root){
-    Neuron *ptr, temp;
+    Neuron *ptr, temp1,temp2;
+    temp2 = *root;                   // 後でrootの中身をチェックするためにtemp2を退避
     ptr=root->child;
     if(ptr!=NULL){
         while(ptr!=root){
             while(ptr->child!=NULL){
                 ptr=ptr->child;      // 子供がいる間、子供のアドレスへ移動
             }
-            temp = *ptr;             // ptrをtempに退避させる
+            temp1 = *ptr;             // ptrをtemp1に退避させる
             free(ptr);
             ptr = NULL;
-            while(temp.brother==NULL){
-                ptr=temp.parent;
-                temp = *ptr;
+            while(temp1.brother==NULL){
+                ptr=temp1.parent;
+                temp1 = *ptr;
                 free(ptr);
                 if(ptr == root){
                     break;
                 }
                 ptr = NULL;
             }
-            if(temp.num != root->num){
-                ptr = temp.brother;
+            if(temp1.num != temp2.num){
+                ptr = temp1.brother;
             }
         }
     }
